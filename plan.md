@@ -26,7 +26,7 @@ a tiny warm-up — **a live taste pass on the new pipeline** (#18's only open bo
 sing low sustained notes and confirm the multi-res spectrogram reads crisp, not
 noisy — visual-only, not a loop gate. Then the three ships:
 
-1. **Intonation feedback** — a target-note line + live cents-deviation readout
+1. **Intonation feedback** (#21) — a target-note line + live cents-deviation readout
    ("+8¢ sharp of G4"). Today the pitch display shows note + Hz only; there is no
    concept of *in-tune-ness* anywhere in the code. This is the most-used feedback
    in a practice room **and** the safe on-ramp to Goal 2: it's the prescriptive
@@ -36,12 +36,12 @@ noisy — visual-only, not a loop gate. Then the three ships:
    sub-sample (parabolic) peak interpolation — a clean loop, litmus: recover a
    synthetic tone to <1¢. The target-line + cue widget it builds is later reused by
    the formant target-zone overlay (#10).
-2. **Ring meter** — quantify Singer's-Formant energy (2–3.5 kHz band vs. total) as a
+2. **Ring meter** (#22) — quantify Singer's-Formant energy (2–3.5 kHz band vs. total) as a
    single "ring / chiaroscuro" readout. Today that band is only a visual highlight
    (`singers_formant_visible` toggle); turning it into a number gives real resonance
    feedback — prescriptive-*lite*, no chart required. Machine-measurable (band-energy
    ratio / spectral tilt); mild genre caveat to confirm with Andrew.
-3. **Memory** — the app currently has none: sung audio scrolls off and is gone. Start
+3. **Memory** (#23) — the app currently has none: sung audio scrolls off and is gone. Start
    small (freeze / scroll-back the last N seconds to inspect), then grow toward
    session record + playback and reference overlays (compare a take to a target).
    Promotes the "Session recording + playback" / "Reference overlays" backlog items.
