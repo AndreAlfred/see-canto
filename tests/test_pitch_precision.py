@@ -62,3 +62,53 @@ class TestPitchSubCentPrecision:
                 f"{freq} Hz: estimated {pitch:.4f} Hz, "
                 f"{cents_error:+.3f} cents off (must be < 1.0 cent)"
             )
+
+
+class TestPitchPrecisionRealBuffer:
+    """Precision under the live app's actual buffer size (PITCH_WINDOW = 4096).
+
+    The class above sizes its buffer to a fixed *period count* — the ideal
+    case. But ui/app.py feeds estimate_pitch a fixed 4096-sample window
+    (~93 ms) regardless of pitch. This pins the precision the app really
+    achieves through that window, so the suite documents reality (not just the
+    best case) and guards against regression.
+
+    Parabolic interpolation reaches well under 1 cent from ~220 Hz upward. The
+    lowest bass notes hold only ~9-10 wave cycles in 4096 samples, so edge bias
+    in the unwindowed autocorrelation leaves a few cents of residual. The
+    low-bass bound below is deliberately loose to document that status quo; it
+    is expected to tighten when the low-pitch polish task (#21) lands (e.g. by
+    windowing the autocorrelation before interpolating).
+    """
+
+    SAMPLE_RATE = 44100
+    APP_BUFFER = 4096  # mirrors ui/app.py PITCH_WINDOW
+
+    # (frequency Hz, cents tolerance) — measured 2026-07-24, post-interpolation.
+    CASES = [
+        (220.0, 1.0),   # low tenor and up: sub-cent through the real window
+        (440.0, 1.0),
+        (880.0, 1.0),
+        (110.0, 6.0),   # low bass: ~4.6c today — polish task (#21) to tighten
+        (98.0, 6.0),    # G2: ~1.9c today
+    ]
+
+    def _sine_wave(self, frequency_hz: float, n_samples: int) -> np.ndarray:
+        t = np.linspace(0, n_samples / self.SAMPLE_RATE, n_samples, endpoint=False)
+        return np.sin(2 * np.pi * frequency_hz * t).astype(np.float32)
+
+    def _cents_error(self, estimated_hz: float, true_hz: float) -> float:
+        return 1200.0 * math.log2(estimated_hz / true_hz)
+
+    def test_real_buffer_precision_within_documented_bounds(self):
+        """Precision through the app's fixed 4096-sample window stays within the
+        measured bounds: sub-cent mid/high, a few cents at the low-bass extreme."""
+        for freq, tol in self.CASES:
+            samples = self._sine_wave(freq, self.APP_BUFFER)
+            pitch = estimate_pitch(samples, self.SAMPLE_RATE)
+            assert pitch is not None, f"expected a pitch estimate at {freq} Hz"
+            cents_error = self._cents_error(pitch, freq)
+            assert abs(cents_error) < tol, (
+                f"{freq} Hz through a {self.APP_BUFFER}-sample window: "
+                f"{cents_error:+.3f} cents off (bound {tol:.1f}c)"
+            )
