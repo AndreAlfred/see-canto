@@ -244,8 +244,28 @@ def estimate_pitch(
     if peak_confidence < confidence_threshold:
         return None
 
+    # Sub-sample refinement: peak_lag is an INTEGER, so frequency
+    # (sample_rate / lag) is quantized to a discrete set of values — the
+    # step between neighboring lags is small at low pitches but grows to
+    # tens of cents by the top of the vocal range, which is far too coarse
+    # for cents-accurate intonation feedback. Fit a parabola through the
+    # peak sample and its two immediate neighbors and use its vertex as a
+    # sub-sample estimate of the true peak location (standard parabolic /
+    # quadratic peak interpolation).
+    refined_lag = float(peak_lag)
+    if 0 < peak_lag < len(autocorr) - 1:
+        y_left = autocorr[peak_lag - 1]
+        y0 = autocorr[peak_lag]
+        y_right = autocorr[peak_lag + 1]
+        denom = y_left - 2.0 * y0 + y_right
+        if denom != 0:  # denom == 0 means a flat peak — no better estimate
+            delta = 0.5 * (y_left - y_right) / denom
+            refined_lag = peak_lag + delta
+    # else: peak sits at the edge of `autocorr` with no neighbor on one
+    # side — fall back to the integer lag rather than interpolate blind.
+
     # Convert lag (samples) back to frequency (Hz).
-    return float(sample_rate / peak_lag)
+    return float(sample_rate / refined_lag)
 
 
 # ---------------------------------------------------------------------------
