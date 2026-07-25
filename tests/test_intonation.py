@@ -34,3 +34,58 @@ class TestNoteMath:
     def test_nearest_note_deviation_from_hz(self):
         assert nearest_note_deviation(440.0) == ("A", 4, pytest.approx(0.0, abs=1e-9))
         assert nearest_note_deviation(0.0) is None
+
+
+import numpy as np
+from audio.intonation import IntonationTracker
+
+
+def _sine(freq, seconds, sr=44100):
+    t = np.linspace(0, seconds, int(sr * seconds), endpoint=False)
+    return np.sin(2 * np.pi * freq * t).astype(np.float32)
+
+
+class TestTrackerRawAndCenter:
+    def _feed_steady(self, tracker, midi, n):
+        # Feed n frames of a constant pitch (given as a MIDI value).
+        hz = 440.0 * 2 ** ((midi - 69) / 12)
+        for _ in range(n):
+            tracker.update(hz)
+
+    def test_raw_reports_latest_pitch(self):
+        tr = IntonationTracker()
+        tr.update(440.0)
+        assert tr.raw == ("A", 4, pytest.approx(0.0, abs=1e-6))
+
+    def test_none_clears_raw(self):
+        tr = IntonationTracker()
+        tr.update(440.0)
+        tr.update(None)
+        assert tr.raw is None
+
+    def test_center_is_median_of_window(self):
+        tr = IntonationTracker(window_seconds=0.5)
+        self._feed_steady(tr, 69.0, tr._window_len)
+        name, octave, cents = tr.center
+        assert (name, octave) == ("A", 4)
+        assert cents == pytest.approx(0.0, abs=1.0)
+
+    def test_center_ignores_single_octave_outlier(self):
+        # A steady A4 window with one octave-down blip: the median center
+        # must barely move (robustness the mean would fail).
+        tr = IntonationTracker(window_seconds=0.5)
+        self._feed_steady(tr, 69.0, tr._window_len - 1)
+        tr.update(220.0)  # one octave-low outlier
+        _, _, cents = tr.center
+        assert abs(cents) < 5.0
+
+    def test_vibrato_center_stays_near_zero(self):
+        # +/-40 cent, 6 Hz vibrato around A4 -> raw swings, center ~ 0.
+        tr = IntonationTracker(window_seconds=0.5)
+        sr, hop = 44100, 1024
+        for k in range(tr._window_len):
+            cents = 40.0 * math.sin(2 * math.pi * 6.0 * k * hop / sr)
+            hz = 440.0 * 2 ** (cents / 1200.0)
+            tr.update(hz)
+        _, _, center_cents = tr.center
+        assert abs(center_cents) < 15.0
