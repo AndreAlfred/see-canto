@@ -59,3 +59,17 @@ class IntonationTracker:
         if not self._center_window:
             return None
         return midi_to_nearest_note(self._center_window[-1])
+
+    @property
+    def center_stable(self) -> bool:
+        """True when the smoothed center is holding still (sustained note).
+
+        Keys on the RANGE of recent centers, NOT the raw pitch spread: vibrato
+        oscillates the raw pitch but leaves the median center fixed, so vibrato
+        reads as stable (we want the marker then); a run slides the center and
+        trips unstable (we fade the marker). Threshold is tune-by-ear.
+        """
+        if len(self._center_window) < self._center_len:
+            return False
+        span_cents = (max(self._center_window) - min(self._center_window)) * 100.0
+        return span_cents <= self.motion_threshold_cents

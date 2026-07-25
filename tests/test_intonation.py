@@ -89,3 +89,35 @@ class TestTrackerRawAndCenter:
             tr.update(hz)
         _, _, center_cents = tr.center
         assert abs(center_cents) < 15.0
+
+
+class TestCenterStability:
+    def test_warmup_is_unstable(self):
+        tr = IntonationTracker()
+        tr.update(440.0)
+        assert tr.center_stable is False   # not enough centers yet
+
+    def test_sustained_note_is_stable(self):
+        tr = IntonationTracker()
+        for _ in range(tr._window_len + tr._center_len):
+            tr.update(440.0)
+        assert tr.center_stable is True
+
+    def test_vibrato_is_stable(self):
+        # Vibrato moves raw pitch but not the median center -> stable.
+        tr = IntonationTracker()
+        sr, hop = 44100, 1024
+        for k in range(tr._window_len + tr._center_len):
+            cents = 40.0 * math.sin(2 * math.pi * 6.0 * k * hop / sr)
+            tr.update(440.0 * 2 ** (cents / 1200.0))
+        assert tr.center_stable is True
+
+    def test_run_is_unstable(self):
+        # A fast rising ramp (a melisma) slides the center -> unstable.
+        tr = IntonationTracker()
+        midi = 60.0
+        for _ in range(tr._window_len + tr._center_len):
+            hz = 440.0 * 2 ** ((midi - 69) / 12)
+            tr.update(hz)
+            midi += 0.4   # ~0.4 semitone per frame: clearly moving
+        assert tr.center_stable is False
