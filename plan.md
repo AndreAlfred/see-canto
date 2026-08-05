@@ -20,32 +20,46 @@ regression-guarded, shipped through the benchmark harness (#15), the Round 1
 resampling-matrix rewrite, and Round 2 multi-resolution analysis (#18). The clean
 autonomous loop is finished.
 
-**Next arc — turn the app from a passive mirror into a practice tool.** Direction
-decided (2026-07-24): ship **intonation → ring → memory**, in that order. First,
-a tiny warm-up — **a live taste pass on the new pipeline** (#18's only open box):
-sing low sustained notes and confirm the multi-res spectrogram reads crisp, not
-noisy — visual-only, not a loop gate. Then the three ships:
+**Current arc — turn the app from a passive mirror into a practice tool.**
+Direction decided (2026-07-24): ship **intonation → ring → memory**, in that order.
 
-1. **Intonation feedback** (#21) — a target-note line + live cents-deviation readout
-   ("+8¢ sharp of G4"). Today the pitch display shows note + Hz only; there is no
-   concept of *in-tune-ness* anywhere in the code. This is the most-used feedback
-   in a practice room **and** the safe on-ramp to Goal 2: it's the prescriptive
-   interaction (draw a target → compare live → nudge) on a domain where correctness
-   is free (G4 is 392 Hz — no vocal-science debate). *Precision first:* the
-   autocorrelation estimator resolves only to integer lags (~34¢/step at A5), so add
-   sub-sample (parabolic) peak interpolation — a clean loop, litmus: recover a
-   synthetic tone to <1¢. The target-line + cue widget it builds is later reused by
-   the formant target-zone overlay (#10).
-2. **Ring meter** (#22) — quantify Singer's-Formant energy (2–3.5 kHz band vs. total) as a
-   single "ring / chiaroscuro" readout. Today that band is only a visual highlight
-   (`singers_formant_visible` toggle); turning it into a number gives real resonance
-   feedback — prescriptive-*lite*, no chart required. Machine-measurable (band-energy
-   ratio / spectral tilt); mild genre caveat to confirm with Andrew.
-3. **Memory** (#23) — the app currently has none: sung audio scrolls off and is gone. Start
-   small (freeze / scroll-back the last N seconds to inspect), then grow toward
-   session record + playback and reference overlays (compare a take to a target).
-   Promotes the "Session recording + playback" / "Reference overlays" backlog items.
-   Turns the live toy into something you practice *against*.
+**Ship 1 — intonation feedback (#21): code complete, awaiting a taste pass.**
+Landed in two parts. **#25 (merged)** gave the pitch estimator sub-sample
+precision via parabolic peak interpolation — litmus met: a synthetic tone now
+recovers to <1¢, where integer-lag autocorrelation quantized to ~34¢/step at A5
+(four times coarser than the gauge's ±8¢ green zone, so the needle would have
+visibly stair-stepped without it). **#26 (open)** adds the tachometer needle
+gauge: nearest-note deviation math in `audio/analysis.py`, the Qt-free
+`IntonationTracker` in `audio/intonation.py` (raw needle + 0.5 s median-smoothed
+center + a stability flag, so vibrato keeps the center marker while a run fades
+it), the custom-painted `ui/tuner.py`, and the `ui/app.py` wiring.
+`pytest tests/` green at 110. Design + task plan:
+`docs/superpowers/specs/2026-07-24-intonation-gauge-design.md` and
+`docs/superpowers/plans/2026-07-24-intonation-gauge.md`.
+
+**Remaining before #26 merges: Andrew's live taste pass** (`python main.py`) —
+sustained note (needle settles near vertical, center marker steady), slide
+between notes (needle sweeps to an edge and flies back at each midpoint),
+vibrato (needle sways, center marker holds). A checkpoint, not a gate; needle
+deflection (±50¢ → ±60°) and the fade threshold are one-line tunings in
+`ui/tuner.py` if they feel wrong. Fold in **#18's only open box** while the mic
+is warm: sing low sustained notes and confirm the multi-res spectrogram reads
+crisp, not noisy — visual only, not a loop gate.
+
+**▶ Ship 2 — ring meter (#22) — the next thing to build.** Quantify
+Singer's-Formant energy (2–3.5 kHz band vs. total) as a single "ring /
+chiaroscuro" readout. Today that band is only a visual highlight
+(`singers_formant_visible` toggle); turning it into a number gives real
+resonance feedback — prescriptive-*lite*, no chart required. Machine-measurable
+(band-energy ratio / spectral tilt), so unlike the gauge's aesthetics this is a
+genuine `/loop` candidate; mild genre caveat to confirm with Andrew before the
+loop starts.
+
+**Ship 3 — memory (#23).** The app currently has none: sung audio scrolls off and
+is gone. Start small (freeze / scroll-back the last N seconds to inspect), then
+grow toward session record + playback and reference overlays (compare a take to a
+target). Promotes the "Session recording + playback" / "Reference overlays"
+backlog items. Turns the live toy into something you practice *against*.
 
 **Deliberately back-burnered:** vibrato rate + extent. A clean-loop feature and a
 good future pick, but not in this arc.
@@ -218,6 +232,8 @@ becomes the readout layer that prescription builds on.
 ## Current state (shipped)
 - Real-time scrolling spectrogram (80–8000 Hz, logarithmic frequency)
 - Fundamental frequency display (Hz + note name)
+- Cents-accurate pitch: sub-sample (parabolic) peak interpolation on the
+  autocorrelation estimator — synthetic tones recover to <1¢ (#25)
 - Custom colormap with a visible quiet-sound floor (−60 dB)
 - Singer's Formant highlight band (2,000–3,500 Hz)
 - F1/F2 formant rolling-dot overlay

@@ -6,7 +6,7 @@
 
 **Architecture:** Pure note-deviation math + a stateful `IntonationTracker` (no Qt, fully unit-tested) feed a custom-painted `TunerWidget`. The widget is wired into the existing audio-frame loop in `ui/app.py`, receiving the same per-frame pitch estimate the readout already gets. Auto-nearest-note mode: no target picking.
 
-**Tech Stack:** Python 3, numpy, PySide6 (Qt), pytest. Venv Python: `/Users/andrewtrimble/voice-trainer/venv/bin/python`.
+**Tech Stack:** Python 3, numpy, PySide6 (Qt), pytest. Venv Python: `venv/bin/python`.
 
 **Spec:** `docs/superpowers/specs/2026-07-24-intonation-gauge-design.md`. Read it first.
 
@@ -21,7 +21,7 @@
 - **Create `tests/test_intonation.py`** — unit tests for the math + tracker.
 - **Create `tests/test_tuner_widget.py`** — widget smoke test.
 
-Run the full suite with: `/Users/andrewtrimble/voice-trainer/venv/bin/python -m pytest tests/ -q` (baseline: 94 passed).
+Run the full suite with: `venv/bin/python -m pytest tests/ -q` (baseline: 94 passed).
 
 ---
 
@@ -31,7 +31,7 @@ Run the full suite with: `/Users/andrewtrimble/voice-trainer/venv/bin/python -m 
 - Modify: `audio/analysis.py` (add after `hz_to_note_name`, ~line 66)
 - Test: `tests/test_intonation.py` (create)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_intonation.py
@@ -73,12 +73,12 @@ class TestNoteMath:
         assert nearest_note_deviation(0.0) is None
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-Run: `/Users/andrewtrimble/voice-trainer/venv/bin/python -m pytest tests/test_intonation.py -q`
+Run: `venv/bin/python -m pytest tests/test_intonation.py -q`
 Expected: FAIL with `ImportError: cannot import name 'hz_to_midi'`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Add to `audio/analysis.py` after `hz_to_note_name` (keep the existing `_A4_HZ`, `_A4_MIDI`, `_NOTE_NAMES`):
 
@@ -113,12 +113,12 @@ def nearest_note_deviation(frequency_hz: float) -> tuple[str, int, float] | None
     return midi_to_nearest_note(midi)
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
-Run: `/Users/andrewtrimble/voice-trainer/venv/bin/python -m pytest tests/test_intonation.py -q`
+Run: `venv/bin/python -m pytest tests/test_intonation.py -q`
 Expected: PASS (6 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add audio/analysis.py tests/test_intonation.py
@@ -133,7 +133,7 @@ git commit -m "feat: note-deviation math for intonation (nearest note + cents) (
 - Create: `audio/intonation.py`
 - Test: `tests/test_intonation.py` (append)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_intonation.py`:
 
@@ -193,12 +193,12 @@ class TestTrackerRawAndCenter:
         assert abs(center_cents) < 15.0
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-Run: `/Users/andrewtrimble/voice-trainer/venv/bin/python -m pytest tests/test_intonation.py -q`
+Run: `venv/bin/python -m pytest tests/test_intonation.py -q`
 Expected: FAIL with `ModuleNotFoundError: No module named 'audio.intonation'`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Create `audio/intonation.py`:
 
@@ -266,12 +266,12 @@ class IntonationTracker:
         return midi_to_nearest_note(self._center_window[-1])
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
-Run: `/Users/andrewtrimble/voice-trainer/venv/bin/python -m pytest tests/test_intonation.py -q`
+Run: `venv/bin/python -m pytest tests/test_intonation.py -q`
 Expected: PASS (all Task 1 + Task 2 tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add audio/intonation.py tests/test_intonation.py
@@ -286,7 +286,7 @@ git commit -m "feat: IntonationTracker raw + median-smoothed center (#21)"
 - Modify: `audio/intonation.py` (add `center_stable` property)
 - Test: `tests/test_intonation.py` (append)
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Append to `tests/test_intonation.py`:
 
@@ -323,12 +323,12 @@ class TestCenterStability:
         assert tr.center_stable is False
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-Run: `/Users/andrewtrimble/voice-trainer/venv/bin/python -m pytest tests/test_intonation.py::TestCenterStability -q`
+Run: `venv/bin/python -m pytest tests/test_intonation.py::TestCenterStability -q`
 Expected: FAIL with `AttributeError: 'IntonationTracker' object has no attribute 'center_stable'`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Add this property to `IntonationTracker` in `audio/intonation.py`:
 
@@ -348,12 +348,12 @@ Add this property to `IntonationTracker` in `audio/intonation.py`:
         return span_cents <= self.motion_threshold_cents
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
-Run: `/Users/andrewtrimble/voice-trainer/venv/bin/python -m pytest tests/test_intonation.py -q`
+Run: `venv/bin/python -m pytest tests/test_intonation.py -q`
 Expected: PASS (all intonation tests).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add audio/intonation.py tests/test_intonation.py
@@ -370,7 +370,7 @@ git commit -m "feat: center-stability fade flag (vibrato stays, runs fade) (#21)
 
 **Note:** the needle *aesthetics* are Andrew's eyes, not a test — the smoke test only proves it constructs, accepts updates, paints without error, and switches theme. Ornate skeuomorphic styling is a Goal 1b follow-up.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```python
 # tests/test_tuner_widget.py
@@ -402,12 +402,12 @@ def test_tuner_smoke(qt_app):
     w.grab()
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
-Run: `/Users/andrewtrimble/voice-trainer/venv/bin/python -m pytest tests/test_tuner_widget.py -q`
+Run: `venv/bin/python -m pytest tests/test_tuner_widget.py -q`
 Expected: FAIL with `ModuleNotFoundError: No module named 'ui.tuner'`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Create `ui/tuner.py`:
 
@@ -541,12 +541,12 @@ class TunerWidget(QWidget):
         p.end()
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
-Run: `/Users/andrewtrimble/voice-trainer/venv/bin/python -m pytest tests/test_tuner_widget.py -q`
+Run: `venv/bin/python -m pytest tests/test_tuner_widget.py -q`
 Expected: PASS (1 test).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add ui/tuner.py tests/test_tuner_widget.py
@@ -560,7 +560,7 @@ git commit -m "feat: TunerWidget needle gauge (raw needle + calm center) (#21)"
 **Files:**
 - Modify: `ui/app.py` (imports; `_setup_ui`; theme handler; audio-frame loop)
 
-- [ ] **Step 1: Add the import**
+- [x] **Step 1: Add the import**
 
 In `ui/app.py`, add to the `ui` imports near the top (beside the `PitchDisplayWidget` import):
 
@@ -568,7 +568,7 @@ In `ui/app.py`, add to the `ui` imports near the top (beside the `PitchDisplayWi
 from ui.tuner import TunerWidget
 ```
 
-- [ ] **Step 2: Instantiate and add to the layout**
+- [x] **Step 2: Instantiate and add to the layout**
 
 In `_setup_ui`, immediately after the `self._pitch_display` is created and added (currently ~line 85-86):
 
@@ -577,7 +577,7 @@ In `_setup_ui`, immediately after the `self._pitch_display` is created and added
         self._central_layout.addWidget(self._tuner)
 ```
 
-- [ ] **Step 3: Theme it**
+- [x] **Step 3: Theme it**
 
 In the theme-change handler, next to `self._pitch_display.set_theme_mode(mode)` (currently ~line 108):
 
@@ -585,7 +585,7 @@ In the theme-change handler, next to `self._pitch_display.set_theme_mode(mode)` 
         self._tuner.set_theme_mode(mode)
 ```
 
-- [ ] **Step 4: Feed it each frame**
+- [x] **Step 4: Feed it each frame**
 
 In the audio-frame loop, next to `self._pitch_display.update_pitch(latest_pitch)` (currently ~line 190):
 
@@ -593,17 +593,17 @@ In the audio-frame loop, next to `self._pitch_display.update_pitch(latest_pitch)
         self._tuner.update_pitch(latest_pitch)
 ```
 
-- [ ] **Step 5: Verify the suite is still green**
+- [x] **Step 5: Verify the suite is still green**
 
-Run: `/Users/andrewtrimble/voice-trainer/venv/bin/python -m pytest tests/ -q`
+Run: `venv/bin/python -m pytest tests/ -q`
 Expected: PASS — 94 baseline + new intonation/tuner tests, zero regressions.
 
-- [ ] **Step 6: Manual verification (Andrew)**
+- [ ] **Step 6: Manual verification (Andrew)** — pending
 
-Run: `/Users/andrewtrimble/voice-trainer/venv/bin/python main.py`
+Run: `venv/bin/python main.py`
 Sing sustained notes (needle should settle near vertical, center marker steady), slide between notes (needle sweeps and flies back at each midpoint), and add vibrato (needle sways, center marker holds). This taste pass is a checkpoint, not a gate.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add ui/app.py
