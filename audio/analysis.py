@@ -66,6 +66,36 @@ def hz_to_note_name(frequency_hz: float) -> tuple[str | None, int | None]:
     return note_name, octave
 
 
+def hz_to_midi(frequency_hz: float) -> float | None:
+    """Convert Hz to a fractional MIDI note number (unrounded).
+
+    Unlike hz_to_note_name, this does NOT round — the fractional part is what
+    carries cents-accurate intonation. Returns None for non-positive input.
+    """
+    if frequency_hz <= 0:
+        return None
+    return _A4_MIDI + 12 * math.log2(frequency_hz / _A4_HZ)
+
+
+def midi_to_nearest_note(midi: float) -> tuple[str, int, float]:
+    """Nearest note and cents deviation for a fractional MIDI value.
+
+    Returns (note_name, octave, cents) with cents in [-50, 50] — negative is
+    flat, positive is sharp.
+    """
+    nearest = round(midi)
+    cents = (midi - nearest) * 100.0
+    return _NOTE_NAMES[nearest % 12], (nearest // 12) - 1, cents
+
+
+def nearest_note_deviation(frequency_hz: float) -> tuple[str, int, float] | None:
+    """Nearest note + cents deviation for a frequency in Hz, or None if <= 0."""
+    midi = hz_to_midi(frequency_hz)
+    if midi is None:
+        return None
+    return midi_to_nearest_note(midi)
+
+
 # ---------------------------------------------------------------------------
 # Spectrogram computation
 # ---------------------------------------------------------------------------

@@ -24,6 +24,7 @@ from ui.settings import AppSettings
 from ui.settings_panel import SettingsPanel
 from ui.spectrogram import SpectrogramWidget
 from ui.pitch_display import PitchDisplayWidget
+from ui.tuner import TunerWidget
 
 SAMPLE_RATE      = 44100
 BLOCK_SIZE       = 1024
@@ -85,6 +86,9 @@ class MainWindow(QMainWindow):
         self._pitch_display = PitchDisplayWidget()
         self._central_layout.addWidget(self._pitch_display)
 
+        self._tuner = TunerWidget()
+        self._central_layout.addWidget(self._tuner)
+
     def _apply_theme_mode(self, mode: str) -> None:
         """Dress every mode-aware element for the given theme, live."""
         theme.set_mode(mode)
@@ -106,6 +110,7 @@ class MainWindow(QMainWindow):
         self._frame.set_ornate(mode != "dark")
         self._spectrogram.set_theme_mode(mode)
         self._pitch_display.set_theme_mode(mode)
+        self._tuner.set_theme_mode(mode)
         self._settings_panel.set_theme_mode(mode)
 
     def _on_dark_mode_toggled(self, checked: bool) -> None:
@@ -188,6 +193,7 @@ class MainWindow(QMainWindow):
                 latest_pitch = pitch_hz
 
         self._pitch_display.update_pitch(latest_pitch)
+        self._tuner.update_pitch(latest_pitch)
 
     def closeEvent(self, event) -> None:
         self._timer.stop()
